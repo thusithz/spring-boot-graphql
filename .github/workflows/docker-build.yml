@@ -37,6 +37,7 @@ jobs:
             echo "tag=latest" >> $GITHUB_ENV
           else
             echo "tag=${{ github.ref_name }}-${{ github.sha }}" >> $GITHUB_ENV
+          fi
 
       # Build and push Docker image
       - name: Build and Push Docker Image
