@@ -1,0 +1,51 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository code
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Log in to DockerHub (requires secrets for DOCKER_USERNAME and DOCKER_PASSWORD)
+      - name: Log in to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ${{ secrets.DOCKER_REGISTRY_URL }}
+
+      # Set dynamic Docker tag based on branch name or commit SHA
+      - name: Set Docker Tag
+        id: docker_tag
+        run: |
+          if [ "${{ github.ref_name }}" == "main" ]; then
+            echo "tag=latest" >> $GITHUB_ENV
+          else
+            echo "tag=${{ github.ref_name }}-${{ github.sha }}" >> $GITHUB_ENV
+
+      # Build and push Docker image
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKER_REGISTRY_URL }}/spring-boot-grapghql-app:${{ env.tag }}
+
+      # Verify the Docker image build
+      - name: Verify Docker Image
+        run: docker run --rm ${{ secrets.DOCKER_REGISTRY_URL }}/spring-boot-grapghql-app:${{ env.tag }} java -version
